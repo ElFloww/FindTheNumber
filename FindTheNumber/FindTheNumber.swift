@@ -1,17 +1,11 @@
-//
-//  ContentView.swift
-//  FindTheNumber
-//
-//  Created by Florent Dubut on 18/11/2025.
-//
-
 import SwiftUI
 import FirebaseCore
 import Combine
 
 @main
-struct FindTheNumberApp: App {
+struct FindItApp: App {
     @StateObject private var scoreStore = FirebaseScoreStore()
+    @State private var showSplashScreen = true
     
     init() {
         FirebaseApp.configure()
@@ -19,10 +13,12 @@ struct FindTheNumberApp: App {
     
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-                HomeView()
+            if showSplashScreen {
+                SplashScreenView(isActive: $showSplashScreen)
+            } else {
+                MainMenuView()
+                    .environmentObject(scoreStore)
             }
-            .environmentObject(scoreStore)
         }
     }
 }
