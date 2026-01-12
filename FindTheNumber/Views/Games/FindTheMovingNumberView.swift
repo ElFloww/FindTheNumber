@@ -22,7 +22,11 @@ struct FindTheMovingNumberView: View {
     @State private var currentRound: Int = 1
     @State private var targetNumber: Int = 0
     @State private var movingNumbers: [MovingNumber] = []
+    
+    // Modification 1: On stocke la taille de la zone de jeu spécifique
     @State private var screenSize: CGSize = .zero
+    @State private var playAreaSize: CGSize = .zero
+    
     @State private var showGameOver = false
     @State private var pseudo: String = ""
     @State private var feedback: String? = nil
@@ -46,6 +50,7 @@ struct FindTheMovingNumberView: View {
                 .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
+                    // --- HEADER ---
                     VStack(spacing: 12) {
                         HStack(spacing: 8) {
                             HStack(spacing: 6) {
@@ -131,6 +136,7 @@ struct FindTheMovingNumberView: View {
                     }
                     .padding()
                     
+                    // --- CIBLE ---
                     VStack(spacing: 8) {
                         Text("Trouve le")
                             .font(.headline)
@@ -185,8 +191,18 @@ struct FindTheMovingNumberView: View {
                     .frame(height: 180)
                     .padding(.vertical)
                     
+                    // --- ZONE DE JEU ---
                     GeometryReader { playAreaGeometry in
                         ZStack {
+                            // Modification 2: Capture de la taille exacte
+                            Color.clear
+                                .onAppear {
+                                    playAreaSize = playAreaGeometry.size
+                                }
+                                .onChange(of: playAreaGeometry.size) { newSize in
+                                    playAreaSize = newSize
+                                }
+                            
                             ForEach(movingNumbers) { number in
                                 Text("\(number.value)")
                                     .font(.system(size: 40, weight: .bold, design: .rounded))
@@ -205,6 +221,7 @@ struct FindTheMovingNumberView: View {
                                             )
                                             .shadow(color: .black.opacity(0.2), radius: 5)
                                     )
+                                    // La position est relative à ce GeometryReader
                                     .position(number.position)
                                     .onTapGesture {
                                         guard isRunning else { return }
@@ -216,6 +233,7 @@ struct FindTheMovingNumberView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .ignoresSafeArea(edges: .bottom) // Modification 3: Permet d'aller tout en bas
                 }
                 
                 if showRoundTransition {
@@ -302,18 +320,21 @@ struct FindTheMovingNumberView: View {
     private func initializeRound() {
         targetNumber = Int.random(in: 0...9)
         
+        // Sécurité si la taille n'est pas encore chargée
+        guard playAreaSize.width > 0, playAreaSize.height > 0 else { return }
+        
         let numberSize: CGFloat = 60
         let padding: CGFloat = 30
         
-        let headerHeight: CGFloat = 280
-        let bottomMargin: CGFloat = 170
-        let playableHeight = screenSize.height - headerHeight - bottomMargin
+        // Modification 4: Utilisation directe de la taille réelle
+        let playableWidth = playAreaSize.width
+        let playableHeight = playAreaSize.height
         
         let numberOfDistractors = 5 + (currentRound - 1) * 3
         
         var numbers: [MovingNumber] = []
         
-        let targetX = CGFloat.random(in: padding...(screenSize.width - padding))
+        let targetX = CGFloat.random(in: padding...(playableWidth - padding))
         let targetY = CGFloat.random(in: numberSize/2...(playableHeight - numberSize/2))
         let targetVelocityX = CGFloat.random(in: -3...3)
         let targetVelocityY = CGFloat.random(in: -3...3)
@@ -330,7 +351,7 @@ struct FindTheMovingNumberView: View {
                 distractorValue = Int.random(in: 0...9)
             } while distractorValue == targetNumber
             
-            let randomX = CGFloat.random(in: padding...(screenSize.width - padding))
+            let randomX = CGFloat.random(in: padding...(playableWidth - padding))
             let randomY = CGFloat.random(in: numberSize/2...(playableHeight - numberSize/2))
             let randomVelocityX = CGFloat.random(in: -3...3)
             let randomVelocityY = CGFloat.random(in: -3...3)
@@ -346,12 +367,15 @@ struct FindTheMovingNumberView: View {
     }
     
     private func updatePositions() {
+        // Sécurité
+        guard playAreaSize.width > 0, playAreaSize.height > 0 else { return }
+        
         let numberSize: CGFloat = 60
         let padding: CGFloat = 30
         
-        let headerHeight: CGFloat = 280
-        let bottomMargin: CGFloat = 170
-        let playableHeight = screenSize.height - headerHeight - bottomMargin
+        // Modification 5: Logique de rebond basée sur la taille réelle
+        let playableWidth = playAreaSize.width
+        let playableHeight = playAreaSize.height
         
         let speedMultiplier = 1.0 + (CGFloat(currentRound - 1) * 0.1)
         
@@ -361,11 +385,13 @@ struct FindTheMovingNumberView: View {
             number.position.x += number.velocity.x * speedMultiplier
             number.position.y += number.velocity.y * speedMultiplier
             
-            if number.position.x <= padding || number.position.x >= screenSize.width - padding {
+            // Rebond Latéral
+            if number.position.x <= padding || number.position.x >= playableWidth - padding {
                 number.velocity.x = -number.velocity.x
-                number.position.x = max(padding, min(screenSize.width - padding, number.position.x))
+                number.position.x = max(padding, min(playableWidth - padding, number.position.x))
             }
             
+            // Rebond Vertical
             if number.position.y <= numberSize/2 || number.position.y >= playableHeight - numberSize/2 {
                 number.velocity.y = -number.velocity.y
                 number.position.y = max(numberSize/2, min(playableHeight - numberSize/2, number.position.y))

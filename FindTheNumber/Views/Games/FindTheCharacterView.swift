@@ -24,7 +24,11 @@ struct FindTheCharacterView: View {
     @State private var currentRound: Int = 1
     @State private var targetCharacter: String = ""
     @State private var movingCharacters: [MovingCharacter] = []
+    
+    // Modification 1: Variables de taille
     @State private var screenSize: CGSize = .zero
+    @State private var playAreaSize: CGSize = .zero
+    
     @State private var showGameOver = false
     @State private var pseudo: String = ""
     @State private var feedback: String? = nil
@@ -195,6 +199,15 @@ struct FindTheCharacterView: View {
                     // Zone de jeu avec les personnages qui bougent
                     GeometryReader { playAreaGeometry in
                         ZStack {
+                            // Modification 2: Capture de la taille exacte
+                            Color.clear
+                                .onAppear {
+                                    playAreaSize = playAreaGeometry.size
+                                }
+                                .onChange(of: playAreaGeometry.size) { newSize in
+                                    playAreaSize = newSize
+                                }
+                            
                             ForEach(movingCharacters) { character in
                                 Image(character.characterName)
                                     .resizable()
@@ -211,6 +224,7 @@ struct FindTheCharacterView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .ignoresSafeArea(edges: .bottom) // Modification 3: Ignore la zone en bas
                 }
                 
                 // Transition entre les rounds
@@ -304,19 +318,21 @@ struct FindTheCharacterView: View {
     private func initializeRound() {
         targetCharacter = characters.randomElement()!
         
+        // Sécurité
+        guard playAreaSize.width > 0, playAreaSize.height > 0 else { return }
+        
         let characterSize: CGFloat = 70
         let padding: CGFloat = 35
         
-        // Calculer la hauteur de la zone de jeu avec marge en bas
-        let headerHeight: CGFloat = 280
-        let bottomMargin: CGFloat = 170
-        let playableHeight = screenSize.height - headerHeight - bottomMargin
+        // Modification 4: Utilisation des dimensions réelles
+        let playableWidth = playAreaSize.width
+        let playableHeight = playAreaSize.height
         
         let numberOfDistractors = 5 + (currentRound - 1) * 2
         
         var chars: [MovingCharacter] = []
         
-        let targetX = CGFloat.random(in: padding...(screenSize.width - padding))
+        let targetX = CGFloat.random(in: padding...(playableWidth - padding))
         let targetY = CGFloat.random(in: characterSize/2...(playableHeight - characterSize/2))
         let targetVelocityX = CGFloat.random(in: -3...3)
         let targetVelocityY = CGFloat.random(in: -3...3)
@@ -333,7 +349,7 @@ struct FindTheCharacterView: View {
                 distractorCharacter = characters.randomElement()!
             } while distractorCharacter == targetCharacter
             
-            let randomX = CGFloat.random(in: padding...(screenSize.width - padding))
+            let randomX = CGFloat.random(in: padding...(playableWidth - padding))
             let randomY = CGFloat.random(in: characterSize/2...(playableHeight - characterSize/2))
             let randomVelocityX = CGFloat.random(in: -3...3)
             let randomVelocityY = CGFloat.random(in: -3...3)
@@ -349,17 +365,20 @@ struct FindTheCharacterView: View {
     }
     
     private func updatePositions() {
+        // Sécurité
+        guard playAreaSize.width > 0, playAreaSize.height > 0 else { return }
+        
         let characterSize: CGFloat = 70
         let padding: CGFloat = 35
         
-        let headerHeight: CGFloat = 280
-        let bottomMargin: CGFloat = 170
-        let playableHeight = screenSize.height - headerHeight - bottomMargin
+        // Modification 5: Logique de rebond avec dimensions réelles
+        let playableWidth = playAreaSize.width
+        let playableHeight = playAreaSize.height
         
         // Calcul du multiplicateur de vitesse basé sur le round
         let speedMultiplier = 1.0 + (CGFloat(currentRound - 1) * 0.1)
         
-        let maxX = screenSize.width - padding
+        let maxX = playableWidth - padding
         let maxY = playableHeight - characterSize/2
         let minY = characterSize/2
         
