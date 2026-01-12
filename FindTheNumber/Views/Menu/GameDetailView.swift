@@ -248,7 +248,7 @@ struct GameDetailView: View {
     private func destinationView(for gameType: Game.GameType) -> some View {
         switch gameType {
         case .calculMystere:
-            GameView()
+            FindTheAnswerView()
                 .environmentObject(scoreStore)
         case .findTheMovingNumber:
             FindTheMovingNumberView()

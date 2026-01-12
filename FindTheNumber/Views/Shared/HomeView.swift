@@ -38,7 +38,7 @@ struct HomeView: View {
                 
                 VStack(spacing: 16) {
                     NavigationLink {
-                        GameView()
+                        FindTheAnswerView()
                     } label: {
                         HStack {
                             Image(systemName: "play.fill")

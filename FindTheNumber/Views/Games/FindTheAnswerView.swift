@@ -1,10 +1,11 @@
 import SwiftUI
 import Combine
 
-struct GameView: View {
+struct FindTheAnswerView: View {
     @EnvironmentObject var scoreStore: FirebaseScoreStore
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) var colorScheme
+    @StateObject private var soundManager = SoundManager.shared
     
     private let gameDuration = 60
     
@@ -219,10 +220,14 @@ struct GameView: View {
         }
         .navigationBarTitle("Partie", displayMode: .inline)
         .onAppear {
+            soundManager.playBackgroundMusic(named: "wanted-reverse-music")
             remainingTime = gameDuration
             isRunning = true
             question = .random()
             digitButtons = Array(0...9).shuffled()
+        }
+        .onDisappear {
+            soundManager.stopBackgroundMusic()
         }
         .onReceive(timer) { _ in
             guard isRunning else { return }
@@ -281,7 +286,7 @@ struct GameView: View {
 
 #Preview {
     NavigationStack {
-        GameView()
+        FindTheAnswerView()
             .environmentObject(FirebaseScoreStore())
     }
 }

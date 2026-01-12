@@ -12,6 +12,7 @@ struct FindTheMovingNumberView: View {
     @EnvironmentObject var scoreStore: FirebaseScoreStore
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) var colorScheme
+    @StateObject private var soundManager = SoundManager.shared
     
     let movementTimer = Timer.publish(every: 0.016, on: .main, in: .common).autoconnect()
     let roundTimer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
@@ -146,7 +147,7 @@ struct FindTheMovingNumberView: View {
                             .font(.system(size: 60, weight: .bold, design: .rounded))
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [.orange, .red],
+                                    colors: [.blue, .purple],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
@@ -155,7 +156,7 @@ struct FindTheMovingNumberView: View {
                             .background(
                                 RoundedRectangle(cornerRadius: 20)
                                     .fill(Color.white.opacity(0.9))
-                                    .shadow(color: .orange.opacity(0.3), radius: 15)
+                                    .shadow(color: .blue.opacity(0.3), radius: 15)
                             )
                         
                         VStack(spacing: 4) {
@@ -212,9 +213,7 @@ struct FindTheMovingNumberView: View {
                                         Circle()
                                             .fill(
                                                 LinearGradient(
-                                                    colors: number.value == targetNumber 
-                                                        ? [.orange, .red]
-                                                        : [.blue, .purple],
+                                                    colors: [.blue, .purple],
                                                     startPoint: .topLeading,
                                                     endPoint: .bottomTrailing
                                                 )
@@ -263,9 +262,13 @@ struct FindTheMovingNumberView: View {
             }
             .onAppear {
                 screenSize = geometry.size
+                soundManager.playBackgroundMusic(named: "wanted-music")
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     startNewRound()
                 }
+            }
+            .onDisappear {
+                soundManager.stopBackgroundMusic()
             }
         }
         .navigationBarTitle("Trouve le Nombre", displayMode: .inline)
@@ -405,6 +408,8 @@ struct FindTheMovingNumberView: View {
         if number.value == targetNumber {
             isRunning = false
             
+            soundManager.playSoundEffect(named: "success")
+            
             let timeBonus = max(100, Int(1000 - (roundTime * 150)))
             
             score += timeBonus
@@ -437,6 +442,8 @@ struct FindTheMovingNumberView: View {
             }
         } else {
             isRunning = false
+            
+            soundManager.playSoundEffect(named: "error")
             
             score = max(0, score - 200)
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
