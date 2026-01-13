@@ -12,6 +12,7 @@ struct LeaderboardView: View {
             )
             .ignoresSafeArea()
             
+            // Show message if no scores yet
             if scoreStore.scores.isEmpty {
                 VStack(spacing: 20) {
                     Image(systemName: "trophy.fill")
@@ -91,6 +92,7 @@ struct LeaderboardView: View {
         }
     }
     
+    // Medal colors for top 3 positions
     private func medalGradient(for index: Int) -> LinearGradient {
         switch index {
         case 0:

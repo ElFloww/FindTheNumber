@@ -1,5 +1,6 @@
 import SwiftUI
 
+// Screen shown when game ends - lets player save their score
 struct GameOverView: View {
     let score: Int
     @Binding var pseudo: String
@@ -90,6 +91,7 @@ struct GameOverView: View {
                         .padding(.horizontal)
                     
                     Button {
+                        // Use "Anonyme" if no name entered
                         let trimmed = pseudo.trimmingCharacters(in: .whitespacesAndNewlines)
                         let name = trimmed.isEmpty ? "Anonyme" : trimmed
                         onSave(name)

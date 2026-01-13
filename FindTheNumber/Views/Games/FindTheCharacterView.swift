@@ -39,6 +39,7 @@ struct FindTheCharacterView: View {
     @State private var showRoundTransition = false
     @State private var totalTimeRemaining: Int = 60
     
+    // Available characters for the game
     let characters = ["mario", "luigi", "wario", "yoshi"]
     
     var body: some View {
@@ -315,7 +316,9 @@ struct FindTheCharacterView: View {
         }
     }
     
+    // Initialize a new round with random target and distractors
     private func initializeRound() {
+        // Pick a random character as target
         targetCharacter = characters.randomElement()!
         
         // Sécurité
@@ -328,6 +331,7 @@ struct FindTheCharacterView: View {
         let playableWidth = playAreaSize.width
         let playableHeight = playAreaSize.height
         
+        // More distractors each round (5, 7, 9, 11...)
         let numberOfDistractors = 5 + (currentRound - 1) * 2
         
         var chars: [MovingCharacter] = []
@@ -343,8 +347,10 @@ struct FindTheCharacterView: View {
             velocity: CGPoint(x: targetVelocityX, y: targetVelocityY)
         ))
         
+        // Generate distractor characters
         for _ in 0..<numberOfDistractors {
             var distractorCharacter: String
+            // Ensure distractor is different from target
             repeat {
                 distractorCharacter = characters.randomElement()!
             } while distractorCharacter == targetCharacter
@@ -364,6 +370,7 @@ struct FindTheCharacterView: View {
         movingCharacters = chars.shuffled()
     }
     
+    // Update character positions 60 times per second
     private func updatePositions() {
         // Sécurité
         guard playAreaSize.width > 0, playAreaSize.height > 0 else { return }
@@ -405,12 +412,15 @@ struct FindTheCharacterView: View {
         }
     }
     
+    // Handle character tap
     private func characterTapped(_ character: MovingCharacter) {
         if character.characterName == targetCharacter {
+            // Correct character tapped
             isRunning = false
             
             soundManager.playSoundEffect(named: "\(targetCharacter)-success")
             
+            // Award time bonus (faster = more points)
             let timeBonus = max(100, Int(1000 - (roundTime * 150)))
             
             score += timeBonus
@@ -442,8 +452,10 @@ struct FindTheCharacterView: View {
                 }
             }
         } else {
+            // Wrong character tapped - penalty
             soundManager.playSoundEffect(named: "\(character.characterName)-failed")
             
+            // Remove the wrong character from screen
             movingCharacters.removeAll { $0.id == character.id }
             
             score = max(0, score - 200)

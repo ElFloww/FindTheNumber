@@ -14,6 +14,8 @@ struct FindTheMovingNumberView: View {
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var soundManager = SoundManager.shared
     
+    // MARK: - Timers for animation and game logic
+    // Movement timer: updates positions 60 times per second (every ~16ms) for smooth animation
     let movementTimer = Timer.publish(every: 0.016, on: .main, in: .common).autoconnect()
     let roundTimer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
     let gameTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -24,7 +26,6 @@ struct FindTheMovingNumberView: View {
     @State private var targetNumber: Int = 0
     @State private var movingNumbers: [MovingNumber] = []
     
-    // Modification 1: On stocke la taille de la zone de jeu spécifique
     @State private var screenSize: CGSize = .zero
     @State private var playAreaSize: CGSize = .zero
     
@@ -51,7 +52,6 @@ struct FindTheMovingNumberView: View {
                 .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // --- HEADER ---
                     VStack(spacing: 12) {
                         HStack(spacing: 8) {
                             HStack(spacing: 6) {
@@ -137,7 +137,6 @@ struct FindTheMovingNumberView: View {
                     }
                     .padding()
                     
-                    // --- CIBLE ---
                     VStack(spacing: 8) {
                         Text("Trouve le")
                             .font(.headline)
@@ -192,10 +191,8 @@ struct FindTheMovingNumberView: View {
                     .frame(height: 180)
                     .padding(.vertical)
                     
-                    // --- ZONE DE JEU ---
                     GeometryReader { playAreaGeometry in
                         ZStack {
-                            // Modification 2: Capture de la taille exacte
                             Color.clear
                                 .onAppear {
                                     playAreaSize = playAreaGeometry.size
@@ -220,7 +217,6 @@ struct FindTheMovingNumberView: View {
                                             )
                                             .shadow(color: .black.opacity(0.2), radius: 5)
                                     )
-                                    // La position est relative à ce GeometryReader
                                     .position(number.position)
                                     .onTapGesture {
                                         guard isRunning else { return }
@@ -232,7 +228,7 @@ struct FindTheMovingNumberView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .ignoresSafeArea(edges: .bottom) // Modification 3: Permet d'aller tout en bas
+                    .ignoresSafeArea(edges: .bottom)
                 }
                 
                 if showRoundTransition {
@@ -321,24 +317,30 @@ struct FindTheMovingNumberView: View {
     }
     
     private func initializeRound() {
+        // MARK: - Random Number Generation
+        // 1. Generate a random target number between 0 and 9
         targetNumber = Int.random(in: 0...9)
         
-        // Sécurité si la taille n'est pas encore chargée
         guard playAreaSize.width > 0, playAreaSize.height > 0 else { return }
         
         let numberSize: CGFloat = 60
         let padding: CGFloat = 30
         
-        // Modification 4: Utilisation directe de la taille réelle
         let playableWidth = playAreaSize.width
         let playableHeight = playAreaSize.height
         
+        // 2. Calculate number of distractor numbers (increases with each round)
+        // Round 1: 5 distractors, Round 2: 8, Round 3: 11, etc.
         let numberOfDistractors = 5 + (currentRound - 1) * 3
         
         var numbers: [MovingNumber] = []
         
+        // 3. Generate target number with random position and velocity
+        // Random X position within playable width (with padding from edges)
         let targetX = CGFloat.random(in: padding...(playableWidth - padding))
+        // Random Y position within playable height (with padding from edges)
         let targetY = CGFloat.random(in: numberSize/2...(playableHeight - numberSize/2))
+        // Random velocity between -3 and +3 pixels per frame (determines direction and speed)
         let targetVelocityX = CGFloat.random(in: -3...3)
         let targetVelocityY = CGFloat.random(in: -3...3)
         
@@ -348,14 +350,18 @@ struct FindTheMovingNumberView: View {
             velocity: CGPoint(x: targetVelocityX, y: targetVelocityY)
         ))
         
+        // 4. Generate distractor numbers (wrong numbers to avoid)
         for _ in 0..<numberOfDistractors {
             var distractorValue: Int
+            // Ensure distractor is different from target number
             repeat {
                 distractorValue = Int.random(in: 0...9)
             } while distractorValue == targetNumber
             
+            // Random position within playable area
             let randomX = CGFloat.random(in: padding...(playableWidth - padding))
             let randomY = CGFloat.random(in: numberSize/2...(playableHeight - numberSize/2))
+            // Random velocity for each distractor
             let randomVelocityX = CGFloat.random(in: -3...3)
             let randomVelocityY = CGFloat.random(in: -3...3)
             
@@ -366,35 +372,38 @@ struct FindTheMovingNumberView: View {
             ))
         }
         
+        // 5. Shuffle all numbers (target + distractors) for random display order
         movingNumbers = numbers.shuffled()
     }
     
+    // MARK: - Position Update System (called 60 times per second)
     private func updatePositions() {
-        // Sécurité
         guard playAreaSize.width > 0, playAreaSize.height > 0 else { return }
         
         let numberSize: CGFloat = 60
         let padding: CGFloat = 30
         
-        // Modification 5: Logique de rebond basée sur la taille réelle
         let playableWidth = playAreaSize.width
         let playableHeight = playAreaSize.height
         
+        // Speed increases by 10% each round (Round 1: 1.0x, Round 2: 1.1x, Round 3: 1.2x, etc.)
         let speedMultiplier = 1.0 + (CGFloat(currentRound - 1) * 0.1)
         
         for index in movingNumbers.indices {
             var number = movingNumbers[index]
             
+            // Update position based on velocity (pixels per frame) × speed multiplier
+            // Example: velocity (2, -3) moves number 2 pixels right and 3 pixels up
             number.position.x += number.velocity.x * speedMultiplier
             number.position.y += number.velocity.y * speedMultiplier
-            
-            // Rebond Latéral
+             
+            // Horizontal bounce: reverse direction when hitting left or right edge
             if number.position.x <= padding || number.position.x >= playableWidth - padding {
                 number.velocity.x = -number.velocity.x
                 number.position.x = max(padding, min(playableWidth - padding, number.position.x))
             }
             
-            // Rebond Vertical
+            // Vertical bounce: reverse direction when hitting top or bottom edge
             if number.position.y <= numberSize/2 || number.position.y >= playableHeight - numberSize/2 {
                 number.velocity.y = -number.velocity.y
                 number.position.y = max(numberSize/2, min(playableHeight - numberSize/2, number.position.y))

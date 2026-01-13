@@ -2,6 +2,7 @@ import SwiftUI
 import FirebaseFirestore
 import Combine
 
+// Manages score data with Firebase Firestore
 final class FirebaseScoreStore: ObservableObject {
     @Published var scores: [PlayerScore] = []
     
@@ -21,6 +22,7 @@ final class FirebaseScoreStore: ObservableObject {
         listener?.remove()
     }
     
+    // Save a new score to Firestore
     func add(score: Int, for name: String, gameType: String, completion: (() -> Void)? = nil) {
         let data: [String: Any] = [
             "name": name,
@@ -41,6 +43,7 @@ final class FirebaseScoreStore: ObservableObject {
         }
     }
     
+    // Listen for real-time score updates from Firestore
     func listenForScores(gameType: String? = nil) {
         listener?.remove()
         
@@ -62,6 +65,7 @@ final class FirebaseScoreStore: ObservableObject {
                 return 
             }
             
+            // Map Firestore documents to PlayerScore objects
             let mapped: [PlayerScore] = documents.compactMap { doc in
                 let data = doc.data()
                 guard
@@ -81,6 +85,7 @@ final class FirebaseScoreStore: ObservableObject {
             }
             
             DispatchQueue.main.async {
+                // Sort scores by highest first
                 self?.scores = mapped.sorted { $0.score > $1.score }
             }
         }

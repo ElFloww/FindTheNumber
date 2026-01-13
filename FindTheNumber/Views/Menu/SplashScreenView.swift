@@ -1,14 +1,17 @@
  import SwiftUI
 
+// Animated splash screen shown on app launch
 struct SplashScreenView: View {
     @Binding var isActive: Bool
 
+    // Animation states for magnifying glass
     @State private var handleScale: CGFloat = 0.0
     @State private var handleOffset: CGFloat = 100
 
     @State private var circleTrim: CGFloat = 0.0
     @State private var lensOpacity: Double = 0.0
     
+    // Animation states for text
     @State private var questionMarkScale: CGFloat = 0.0
     @State private var textOpacity: Double = 0.0
     @State private var textYOffset: CGFloat = 30
@@ -100,16 +103,20 @@ struct SplashScreenView: View {
         }
     }
 
+    // Sequence animations for splash screen reveal
     private func startAnimations() {
+        // Animate magnifying glass handle
         withAnimation(.spring(response: 0.7, dampingFraction: 0.6)) {
             handleScale = 1.0
             handleOffset = 0
         }
 
+        // Draw the circle outline
         withAnimation(.easeInOut(duration: 1.2).delay(0.5)) {
             circleTrim = 1.0
         }
 
+        // Reveal lens and question mark
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
             withAnimation(.easeIn(duration: 0.5)) {
                 lensOpacity = 1.0
@@ -119,11 +126,13 @@ struct SplashScreenView: View {
             }
         }
 
+        // Show app name
         withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(1.9)) {
             textOpacity = 1.0
             textYOffset = 0
         }
 
+        // Transition to main menu after 4 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
             withAnimation(.easeInOut(duration: 0.6)) {
                 isActive = false

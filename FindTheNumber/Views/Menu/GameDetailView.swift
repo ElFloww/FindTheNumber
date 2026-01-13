@@ -11,6 +11,7 @@ struct GameDetailView: View {
     
     init(game: Game) {
         self.game = game
+        // Map game type to string for Firestore queries
         let gameTypeString: String
         switch game.gameType {
         case .calculMystere:
@@ -244,6 +245,7 @@ struct GameDetailView: View {
         .environmentObject(scoreStore)
     }
     
+    // Return the appropriate game view based on game type
     @ViewBuilder
     private func destinationView(for gameType: Game.GameType) -> some View {
         switch gameType {

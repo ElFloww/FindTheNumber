@@ -2,6 +2,7 @@ import AVFoundation
 import SwiftUI
 import Combine
 
+// Manages background music and sound effects
 class SoundManager: ObservableObject {
     static let shared = SoundManager()
     
@@ -22,7 +23,9 @@ class SoundManager: ObservableObject {
         }
     }
     
+    // Play looping background music
     func playBackgroundMusic(named name: String, volume: Float = 0.3) {
+        // Don't restart if already playing
         if currentBackgroundMusicName == name && backgroundMusicPlayer?.isPlaying == true {
             return
         }
@@ -34,7 +37,7 @@ class SoundManager: ObservableObject {
         
         do {
             backgroundMusicPlayer = try AVAudioPlayer(contentsOf: url)
-            backgroundMusicPlayer?.numberOfLoops = -1
+            backgroundMusicPlayer?.numberOfLoops = -1  // Loop forever
             backgroundMusicPlayer?.volume = volume
             backgroundMusicPlayer?.prepareToPlay()
             backgroundMusicPlayer?.play()
@@ -50,6 +53,7 @@ class SoundManager: ObservableObject {
         currentBackgroundMusicName = nil
     }
     
+    // Play a one-time sound effect
     func playSoundEffect(named name: String, volume: Float = 0.7) {
         guard let url = Bundle.main.url(forResource: name, withExtension: "mp3") else {
             print("Son non trouvé: \(name)")

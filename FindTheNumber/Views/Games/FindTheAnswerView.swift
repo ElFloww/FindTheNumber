@@ -20,6 +20,7 @@ struct FindTheAnswerView: View {
     @State private var feedback: String? = nil
     @State private var showFeedback = false
     
+    // Shuffled array of 0-9 for mystery digit buttons
     @State private var digitButtons: [Int] = Array(0...9).shuffled()
     
     @State private var showGameOver = false
@@ -224,6 +225,7 @@ struct FindTheAnswerView: View {
             remainingTime = gameDuration
             isRunning = true
             question = .random()
+            // Shuffle buttons to hide which digit is which
             digitButtons = Array(0...9).shuffled()
         }
         .onDisappear {
@@ -234,6 +236,7 @@ struct FindTheAnswerView: View {
             
             if remainingTime > 0 {
                 remainingTime -= 1
+                // Pulse animation when time is running low
                 if remainingTime <= 10 {
                     withAnimation(.easeInOut(duration: 0.5)) {
                         pulseTimer.toggle()
@@ -254,6 +257,7 @@ struct FindTheAnswerView: View {
         }
     }
     
+    // Validate user answer and update score
     private func checkAnswer() {
         guard let value = Int(userAnswer) else {
             feedback = "Réponse invalide"
@@ -273,9 +277,11 @@ struct FindTheAnswerView: View {
             showFeedback = true
         }
         
+        // Show feedback briefly, then generate new question
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             withAnimation {
                 showFeedback = false
+                feedback = nil
                 userAnswer = ""
                 question = .random()
                 digitButtons.shuffle()
